@@ -98,7 +98,7 @@ local function showKeyGui()
 				if entry:find("Premium_") then
 					local name = entry:split("_")[2]
 					if name ~= playerName then
-						showStatus("Not your key 鈿狅笍", Color3.fromRGB(255, 200, 50))
+						showStatus("Not your key ⚠️", Color3.fromRGB(255, 200, 50))
 						return false
 					end
 				end
@@ -107,7 +107,7 @@ local function showKeyGui()
 				if not isfolder("Delta") then makefolder("Delta") end
 				writefile(FILE_PATH, inputKey)
 
-				showStatus("鉁� Valid key! Loading...", Color3.fromRGB(0, 255, 100))
+				showStatus("✅ Valid key! Loading...", Color3.fromRGB(0, 255, 100))
 				task.wait(1)
 				gui:Destroy()
 				loadstring(game:HttpGet(MAIN_SCRIPT_URL))()
