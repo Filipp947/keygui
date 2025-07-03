@@ -1,148 +1,153 @@
 -- CONFIG
-local KEY_LIST_URL = "https://raw.githubusercontent.com/idkjustarandomdudeherenothingtosee/randomgithubrepodontcheckit-itdoesntmatter/refs/heads/main/justarandomfiledontlookhereitdoesntmatterthatmuch" -- 🔁 Replace
+local KEY_LIST_URL = "https://raw.githubusercontent.com/idkjustarandomdudeherenothingtosee/randomgithubrepodontcheckit-itdoesntmatter/refs/heads/main/justarandomfiledontlookhereitdoesntmatterthatmuch"
 local MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/Filipp947/light/refs/heads/main/light"
-local KEY_SITE_LINK = "https://your-key-link.com" -- 🔁 Replace
-local FILE_PATH = "Delta/Key.txt"
+local KEY_SITE_LINK = "https://your-key-link.com"
+local FILE_PATH = "Delta/Workspace/Key.txt"
 
+-- SERVICES
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerName = player.Name
 
--- Try to load saved key
-local savedKey = ""
+-- Function: Show GUI
+local function showKeyGui()
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name = "KeySystem"
+	gui.ResetOnSpawn = false
+
+	local frame = Instance.new("Frame", gui)
+	frame.Size = UDim2.new(0.85, 0, 0.45, 0)
+	frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	frame.BorderSizePixel = 0
+	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 22)
+
+	local title = Instance.new("TextLabel", frame)
+	title.Size = UDim2.new(1, 0, 0.2, 0)
+	title.Text = "🔐 Key System"
+	title.TextScaled = true
+	title.Font = Enum.Font.GothamBold
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.BackgroundTransparency = 1
+
+	local keyBox = Instance.new("TextBox", frame)
+	keyBox.Size = UDim2.new(0.8, 0, 0.2, 0)
+	keyBox.Position = UDim2.new(0.1, 0, 0.25, 0)
+	keyBox.PlaceholderText = "Enter your key..."
+	keyBox.Text = ""
+	keyBox.TextScaled = true
+	keyBox.Font = Enum.Font.Gotham
+	keyBox.TextColor3 = Color3.new(1, 1, 1)
+	keyBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	Instance.new("UICorner", keyBox).CornerRadius = UDim.new(0, 14)
+
+	local status = Instance.new("TextLabel", frame)
+	status.Size = UDim2.new(0.9, 0, 0.15, 0)
+	status.Position = UDim2.new(0.05, 0, 0.5, 0)
+	status.BackgroundTransparency = 1
+	status.Text = ""
+	status.TextScaled = true
+	status.Font = Enum.Font.GothamBold
+	status.TextColor3 = Color3.fromRGB(255, 100, 100)
+
+	local getKey = Instance.new("TextButton", frame)
+	getKey.Size = UDim2.new(0.4, 0, 0.2, 0)
+	getKey.Position = UDim2.new(0.05, 0, 0.75, 0)
+	getKey.Text = "🔗 Get Key"
+	getKey.TextScaled = true
+	getKey.Font = Enum.Font.GothamBold
+	getKey.TextColor3 = Color3.new(1, 1, 1)
+	getKey.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+	Instance.new("UICorner", getKey).CornerRadius = UDim.new(0, 12)
+
+	getKey.MouseButton1Click:Connect(function()
+		setclipboard(KEY_SITE_LINK)
+		status.Text = "📋 Key link copied!"
+		status.TextColor3 = Color3.fromRGB(255, 255, 100)
+	end)
+
+	local verify = Instance.new("TextButton", frame)
+	verify.Size = UDim2.new(0.4, 0, 0.2, 0)
+	verify.Position = UDim2.new(0.55, 0, 0.75, 0)
+	verify.Text = "✅ Verify"
+	verify.TextScaled = true
+	verify.Font = Enum.Font.GothamBold
+	verify.TextColor3 = Color3.new(1, 1, 1)
+	verify.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+	Instance.new("UICorner", verify).CornerRadius = UDim.new(0, 12)
+
+	local function showStatus(txt, col)
+		status.Text = txt
+		status.TextColor3 = col
+	end
+
+	local function validateKey(inputKey)
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(game:HttpGet(KEY_LIST_URL))
+		end)
+
+		if not ok or typeof(data) ~= "table" then
+			showStatus("⚠️ Failed to load keys", Color3.fromRGB(255, 90, 90))
+			return false
+		end
+
+		for _, entry in ipairs(data) do
+			if entry == inputKey then
+				if entry:find("Premium_") then
+					local name = entry:split("_")[2]
+					if name ~= playerName then
+						showStatus("Not your key ⚠️", Color3.fromRGB(255, 200, 50))
+						return false
+					end
+				end
+
+				-- Save key
+				if not isfolder("Delta") then makefolder("Delta") end
+				writefile(FILE_PATH, inputKey)
+
+				showStatus("✅ Valid key! Loading...", Color3.fromRGB(0, 255, 100))
+				task.wait(1)
+				gui:Destroy()
+				loadstring(game:HttpGet(MAIN_SCRIPT_URL))()
+				return true
+			end
+		end
+
+		showStatus("❌ Invalid key!", Color3.fromRGB(255, 60, 60))
+		return false
+	end
+
+	verify.MouseButton1Click:Connect(function()
+		local input = keyBox.Text
+		showStatus("⏳ Checking...", Color3.fromRGB(255, 255, 120))
+		validateKey(input)
+	end)
+end
+
+-- Attempt auto-load from file
 if isfile and isfile(FILE_PATH) then
-    local ok, result = pcall(readfile, FILE_PATH)
-    if ok then savedKey = result end
+	local ok, saved = pcall(readfile, FILE_PATH)
+	if ok and typeof(saved) == "string" then
+		local success, data = pcall(function()
+			return HttpService:JSONDecode(game:HttpGet(KEY_LIST_URL))
+		end)
+
+		if success and typeof(data) == "table" then
+			for _, key in ipairs(data) do
+				if key == saved then
+					if key:find("Premium_") and key:split("_")[2] ~= playerName then
+						warn("Saved premium key not yours.")
+						break
+					end
+					loadstring(game:HttpGet(MAIN_SCRIPT_URL))()
+					return
+				end
+			end
+		end
+	end
 end
 
--- Validate Function
-local function validateKey(key, showStatus)
-    local ok, data = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet(KEY_LIST_URL))
-    end)
-
-    if not ok or typeof(data) ~= "table" then
-        showStatus("⚠️ Couldn't load key list", Color3.fromRGB(255, 90, 90))
-        return false
-    end
-
-    for _, entry in ipairs(data) do
-        if entry == key then
-            if entry:find("Premium_") then
-                local realUser = entry:split("_")[2]
-                if realUser ~= playerName then
-                    showStatus("Not your key ⚠️", Color3.fromRGB(255, 200, 50))
-                    return false
-                end
-            end
-
-            if not isfile(FILE_PATH) then
-                if not isfolder("Delta") then makefolder("Delta") end
-                writefile(FILE_PATH, key)
-            end
-
-            showStatus("✅ Valid key! Loading...", Color3.fromRGB(0, 255, 100))
-            task.wait(1)
-            loadstring(game:HttpGet(MAIN_SCRIPT_URL))()
-            return true
-        end
-    end
-
-    showStatus("❌ Invalid key provided!", Color3.fromRGB(255, 50, 50))
-    return false
-end
-
--- Auto-verify stored key
-if savedKey ~= "" then
-    validateKey(savedKey, function() end)
-    return
-end
-
--- GUI SETUP
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "KeySystem"
-gui.ResetOnSpawn = false
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0.85, 0, 0.45, 0)
-frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
-frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-frame.BorderSizePixel = 0
-
-local corner = Instance.new("UICorner", frame)
-corner.CornerRadius = UDim.new(0, 22)
-
--- Title
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0.2, 0)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.Text = "🔐 Key System"
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.TextColor3 = Color3.new(1, 1, 1)
-title.BackgroundTransparency = 1
-
--- Key Box
-local keyBox = Instance.new("TextBox", frame)
-keyBox.Size = UDim2.new(0.8, 0, 0.2, 0)
-keyBox.Position = UDim2.new(0.1, 0, 0.25, 0)
-keyBox.PlaceholderText = "Enter your key..."
-keyBox.Text = ""
-keyBox.TextScaled = true
-keyBox.Font = Enum.Font.Gotham
-keyBox.TextColor3 = Color3.new(1, 1, 1)
-keyBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-
-local keyCorner = Instance.new("UICorner", keyBox)
-keyCorner.CornerRadius = UDim.new(0, 14)
-
--- Status
-local status = Instance.new("TextLabel", frame)
-status.Size = UDim2.new(0.9, 0, 0.15, 0)
-status.Position = UDim2.new(0.05, 0, 0.5, 0)
-status.BackgroundTransparency = 1
-status.Text = ""
-status.TextScaled = true
-status.Font = Enum.Font.GothamBold
-status.TextColor3 = Color3.fromRGB(255, 100, 100)
-
--- Get Key
-local getKey = Instance.new("TextButton", frame)
-getKey.Size = UDim2.new(0.4, 0, 0.2, 0)
-getKey.Position = UDim2.new(0.05, 0, 0.75, 0)
-getKey.Text = "🔗 Get Key"
-getKey.TextScaled = true
-getKey.Font = Enum.Font.GothamBold
-getKey.TextColor3 = Color3.new(1, 1, 1)
-getKey.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-Instance.new("UICorner", getKey).CornerRadius = UDim.new(0, 12)
-
-getKey.MouseButton1Click:Connect(function()
-    setclipboard(KEY_SITE_LINK)
-    status.Text = "📋 Key link copied!"
-    status.TextColor3 = Color3.fromRGB(255, 255, 100)
-end)
-
--- Verify
-local verify = Instance.new("TextButton", frame)
-verify.Size = UDim2.new(0.4, 0, 0.2, 0)
-verify.Position = UDim2.new(0.55, 0, 0.75, 0)
-verify.Text = "✅ Verify"
-verify.TextScaled = true
-verify.Font = Enum.Font.GothamBold
-verify.TextColor3 = Color3.new(1, 1, 1)
-verify.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-Instance.new("UICorner", verify).CornerRadius = UDim.new(0, 12)
-
-verify.MouseButton1Click:Connect(function()
-    local input = keyBox.Text
-    status.Text = "⏳ Checking key..."
-    status.TextColor3 = Color3.fromRGB(255, 255, 120)
-
-    validateKey(input, function(msg, color)
-        status.Text = msg
-        status.TextColor3 = color
-    end)
-end)
+-- Show GUI if no valid saved key
+showKeyGui()
